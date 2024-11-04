@@ -11,20 +11,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="shape Drawer" />
-    <link rel="manifest" href="/site.webmanifest" />
-
-    <link rel="icon" href="favicon-32x32.png" type="image/x-icon">
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="shape Drawer" />
+    <meta name="apple-mobile-web-app-title" content="Shape Drawer" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <style>
         body {
-            background-color: #f8f9fa; /* Light background for better contrast */
+            background-color: #f8f9fa;
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
@@ -61,7 +53,7 @@
         }
 
         .btn-custom {
-            background-color: #ff4757; /* A Pinterest-like red */
+            background-color: #ff4757;
             color: white;
             border: none;
             border-radius: 5px;
@@ -69,13 +61,13 @@
         }
 
         .btn-custom:hover {
-            background-color: #e84118; /* Darker shade on hover */
+            background-color: #e84118;
         }
 
         h2 {
             text-align: center;
             margin-bottom: 20px;
-            color: #333; /* Darker title color */
+            color: #333;
         }
     </style>
     <script async src="https://docs.opencv.org/4.5.3/opencv.js"></script>
@@ -117,7 +109,7 @@
 
                 <input type="file" id="upload" accept="image/*" style="display: none;">
                 <button type="button" id="uploadButton" class="btn btn-custom" style="display: none;">Upload Image</button>
-                <button type="button" onclick="drawShape()" class="btn btn-custom" style=" margin-top: 20px;">Draw Shape</button>
+                <button type="button" onclick="drawShape()" class="btn btn-custom" style="margin-top: 20px;">Draw Shape</button>
             </form>
         </div>
 
@@ -187,28 +179,26 @@
                         <input type="number" id="polyRadius" name="polyRadius" class="form-control" value="50" min="20" max="150">
                     </div>
                 `;
-            } 
+            }
 
             // Handle organic from picture
             if (shapeType === 'organicFromPic') {
                 // Hide all dimension inputs and show upload button
                 dimensionsContainer.innerHTML = '';
-                // Clear dimensions when uploading organic from pic
                 colorInput.style.display = 'none';
                 colorLabel.style.display = 'none';
                 posXInput.style.display = 'none';
                 posXLabel.style.display = 'none';
                 posYInput.style.display = 'none';
                 posYLabel.style.display = 'none';
-                
-                //imageUpload.style.display = 'block';
+
                 uploadButton.style.display = 'block';
                 uploadButton.onclick = () => imageUpload.click(); // Trigger the file input
-            }else if (shapeType === 'organic') {
+            } else if (shapeType === 'organic') {
                 dimensionsContainer.innerHTML = `
                     <div class="form-group">
                         <label for="points">Enter Control Points (comma-separated, e.g., 100,150 200,100):</label>
-                        <input type="text" id="points" name="points" class="form-control" placeholder="x1,y1 x2,y2 ...">
+                        <input type="text" id="points" name="points" class="form-control" placeholder="100,150 200,100">
                     </div>
                 `;
                 colorInput.style.display = 'block';
@@ -217,180 +207,149 @@
                 posXLabel.style.display = 'none';
                 posYInput.style.display = 'none';
                 posYLabel.style.display = 'none';
-                imageUpload.style.display = 'none';
                 uploadButton.style.display = 'none';
-
-            }else {
-                // Hide image upload options for other shapes
-                imageUpload.style.display = 'none';
-                uploadButton.style.display = 'none';
-                
-                colorInput.style.display = 'block';
-                colorLabel.style.display = 'block';
+            } else {
+                // Show position inputs for other shapes
                 posXInput.style.display = 'block';
                 posXLabel.style.display = 'block';
                 posYInput.style.display = 'block';
                 posYLabel.style.display = 'block';
+                uploadButton.style.display = 'none';
             }
         }
 
+        function drawShape() {
+            const shapeType = document.getElementById('shapeType').value;
+            const color = colorInput.value;
+            const posX = parseInt(posXInput.value);
+            const posY = parseInt(posYInput.value);
 
-        async function drawShape() {
-            const shapeType = shapeForm.shape.value;
-            const color = shapeForm.color.value;
-            const posX = parseInt(shapeForm.posX.value);
-            const posY = parseInt(shapeForm.posY.value);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = color;
+            ctx.strokeStyle = color;
 
-            if (shapeType === "organicFromPic") {
-                await detectBlobs(); // Detect blobs when an image is uploaded
-                return; // Prevent further shape drawing
-            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
 
-            switch (shapeType) {
-                case "rectangle":
-                    const width = parseInt(shapeForm.width.value);
-                    const height = parseInt(shapeForm.height.value);
-                    drawRectangle(posX, posY, width, height);
-                    break;
-                case "circle":
-                    const radius = parseInt(shapeForm.radius.value);
-                    drawCircle(posX, posY, radius);
-                    break;
-                case "triangle":
-                    const base = parseInt(shapeForm.base.value);
-                    const triangleHeight = parseInt(shapeForm.triangleHeight.value);
-                    drawTriangle(posX, posY, base, triangleHeight);
-                    break;
-                case "polygon":
-                    const sides = parseInt(shapeForm.sides.value);
-                    const polyRadius = parseInt(shapeForm.polyRadius.value);
-                    drawPolygon(posX, posY, polyRadius, sides);
-                    break;
-                case "organic":
-                    const pointsInput = shapeForm.points.value;
-                    const points = pointsInput.split(' ').map(point => {
-                        const [x, y] = point.split(',');
-                        return { x: parseInt(x), y: parseInt(y) };
-                    });
-                    drawOrganicShape(points);
-                    break;
-                default:
-                    alert("Invalid shape selected.");
-                    break;
+            if (shapeType === 'rectangle') {
+                const width = parseInt(document.getElementById('width').value);
+                const height = parseInt(document.getElementById('height').value);
+                ctx.fillRect(posX, posY, width, height);
+            } else if (shapeType === 'circle') {
+                const radius = parseInt(document.getElementById('radius').value);
+                ctx.beginPath();
+                ctx.arc(posX, posY, radius, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (shapeType === 'triangle') {
+                const base = parseInt(document.getElementById('base').value);
+                const height = parseInt(document.getElementById('triangleHeight').value);
+                ctx.beginPath();
+                ctx.moveTo(posX, posY);
+                ctx.lineTo(posX - base / 2, posY + height);
+                ctx.lineTo(posX + base / 2, posY + height);
+                ctx.closePath();
+                ctx.fill();
+            } else if (shapeType === 'polygon') {
+                const sides = parseInt(document.getElementById('sides').value);
+                const polyRadius = parseInt(document.getElementById('polyRadius').value);
+                ctx.beginPath();
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i * 2 * Math.PI) / sides;
+                    const x = posX + polyRadius * Math.cos(angle);
+                    const y = posY + polyRadius * Math.sin(angle);
+                    ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            } else if (shapeType === 'organic') {
+                
+
+                draw3DShape();
             }
         }
 
-        // Blob detection function
-        async function detectBlobs() {
-            await cv.onRuntimeInitialized; // Wait for OpenCV.js to initialize
+        function draw3DShape() {
+            const color = colorInput.value;
+            const pointsInput = document.getElementById('points').value;
+            const points = pointsInput.split(' ').map(p => p.split(',').map(Number));
 
-            const imgElement = document.createElement('img');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
 
-            // Load the image from the file input
-            const fileInput = document.getElementById('upload');
-            const file = fileInput.files[0];
-            if (!file) {
-                return; // Exit if no file is selected
+            const extrusionDepth = 30; // Set the desired extrusion depth
+
+            // Function to lighten a color
+            function lightenColor(hex, percent) {
+                const num = parseInt(hex.slice(1), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return `#${(0x1000000 + (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 + (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 + (B < 255 ? (B < 1 ? 0 : B) : 255)).toString(16).slice(1)}`;
             }
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                imgElement.src = event.target.result;
-                imgElement.onload = () => {
-                    const src = cv.imread(imgElement); // Read the image directly from imgElement
-                    const dst = new cv.Mat();
+            // Function to darken a color
+            function darkenColor(hex, percent) {
+                const num = parseInt(hex.slice(1), 16);
+                const amt = Math.round(2.55 * -percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return `#${(0x1000000 + (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 + (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 + (B < 255 ? (B < 1 ? 0 : B) : 255)).toString(16).slice(1)}`;
+            }
 
-                    // Convert to grayscale
-                    cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+            const lightColor = lightenColor(color, 20); // Lighter tone for the top face
+            const darkColor = darkenColor(color, 20); // Darker tone for the sides
 
-                    // Apply GaussianBlur to reduce noise
-                    cv.GaussianBlur(dst, dst, new cv.Size(5, 5), 0);
+            // Draw bottom face
+            ctx.fillStyle = color; // Original color
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            points.forEach(point => {
+                ctx.lineTo(point[0], point[1]);
+            });
+            ctx.closePath();
+            ctx.fill();
 
-                    // Canny Edge Detection
-                    const edges = new cv.Mat();
-                    cv.Canny(dst, edges, 100, 200); // Adjust thresholds as needed
+            // Draw sides of the 3D shape
+            points.forEach((point, index) => {
+                const nextPoint = points[(index + 1) % points.length];
+                ctx.beginPath();
+                ctx.moveTo(point[0], point[1]);
+                ctx.lineTo(nextPoint[0], nextPoint[1]);
+                ctx.lineTo(nextPoint[0], nextPoint[1] + extrusionDepth);
+                ctx.lineTo(point[0], point[1] + extrusionDepth);
+                ctx.closePath();
+                ctx.fillStyle = darkColor; // Darker shade for the sides
+                ctx.fill();
+            });
 
-                    // Find contours from the edges
-                    const contours = new cv.MatVector();
-                    const hierarchy = new cv.Mat();
-                    cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+            // Draw top face
+            ctx.fillStyle = lightColor; // Lighter shade for the top face
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1] + extrusionDepth);
+            points.forEach(point => {
+                ctx.lineTo(point[0], point[1] + extrusionDepth);
+            });
+            ctx.closePath();
+            ctx.fill();
+        }
 
-                    // Create a new white image to draw contours on
-                    const whiteCanvas = new cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
-                    cv.rectangle(whiteCanvas, new cv.Point(0, 0), new cv.Point(src.cols, src.rows), [255, 255, 255, 255], cv.FILLED); // Fill with white
-
-                    // Draw contours in blue
-                    for (let i = 0; i < contours.size(); i++) {
-                        cv.drawContours(whiteCanvas, contours, i, [255, 0, 0, 255], 2); // Draw contours in blue
+        // Listen for image upload
+        imageUpload.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     }
-
-                    // Show the contours on the canvas
-                    cv.imshow('myCanvas', whiteCanvas);
-
-                    // Clean up
-                    src.delete();
-                    dst.delete();
-                    edges.delete();
-                    contours.delete();
-                    hierarchy.delete();
-                    whiteCanvas.delete();
-                };
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Functions to draw shapes
-        function drawRectangle(x, y, width, height) {
-            ctx.fillRect(x, y, width, height);
-        }
-
-        function drawCircle(x, y, radius) {
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        function drawTriangle(x, y, base, height) {
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x - base / 2, y + height);
-            ctx.lineTo(x + base / 2, y + height);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        function drawPolygon(x, y, radius, sides) {
-            ctx.beginPath();
-            for (let i = 0; i < sides; i++) {
-                const angle = (i * 2 * Math.PI) / sides;
-                const xPos = x + radius * Math.cos(angle);
-                const yPos = y + radius * Math.sin(angle);
-                ctx.lineTo(xPos, yPos);
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
             }
-            ctx.closePath();
-            ctx.fill();
-        }
+        });
 
-        function drawOrganicShape(points) {
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 0; i < points.length - 1; i++) {
-                const ctrlX = (points[i].x + points[i + 1].x) / 2;
-                const ctrlY = (points[i].y + points[i + 1].y) / 2;
-                ctx.quadraticCurveTo(points[i].x, points[i].y, ctrlX, ctrlY);
-            }
-            ctx.quadraticCurveTo(points[points.length - 1].x, points[points.length - 1].y, points[0].x, points[0].y);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        // Initial update of inputs based on default shape selection
+        // Initialize the form
         updateDimensionInputs();
-
-
-
     </script>
 </body>
 
